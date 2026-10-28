@@ -57,7 +57,7 @@ droge dag (zelfde maand, zelfde type dag). Elke extra millimeter regen kost onge
 Bij zware regen (> 5 mm) is het verlies het grootst.
 
 ### Subvraag: afstand tot de metro (Jurre)
-
+Stations dicht bij een metrostation (≤200 m) worden juist méér gebruikt: mediaan 44 verhuringen per dag, tegen 32 bij stations verder dan 500 m. Fiets en metro lijken elkaar aan te vullen.”
 
 ### Subvraag: Weer
 Regen raakt niet elk stadsdeel even hard: in de drukke, toeristische delen in het westen (Westminster,
