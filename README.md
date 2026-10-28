@@ -14,14 +14,7 @@ data/processed/       kleine bestanden die het dashboard gebruikt
 data/raw/             ruwe data: weather/ en metro/ staan op GitHub, tfl/ niet (te groot)
 ```
 
-## Draaien
-
-```bash
-pip install -r requirements.txt
-streamlit run Start.py
-```
-
-Volgorde notebooks: 01 → 02 (→ 04, optioneel). De analyse van de hoofdvraag staat in het dashboard
+Volgorde notebooks: 01 → 02 De analyse van de hoofdvraag staat in het dashboard
 (pagina *Weather vs Rental*, tabblad *Hoofdvraag*).
 
 De weer- en metrodata staan in `data/raw/` op GitHub. De TfL-ritdata (±1,5 GB) en `rides_raw.parquet` (±180 MB)
