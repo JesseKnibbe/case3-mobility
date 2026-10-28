@@ -1,0 +1,5 @@
+step,count
+"Neerslag ontbrekend (blijft NaN, niet gegokt)",0
+Negatieve neerslag → NaN,0
+Temperatuur ontbrekend → lineair geïnterpoleerd (max 3 dagen),0
+"Kolommen >50% leeg verwijderd: snow, tsun",2

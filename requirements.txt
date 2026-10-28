@@ -1,0 +1,11 @@
+streamlit
+pandas
+numpy
+pyarrow
+plotly
+scipy
+statsmodels
+# only needed for the notebooks
+requests
+matplotlib
+holidays

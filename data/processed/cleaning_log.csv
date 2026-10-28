@@ -1,0 +1,7 @@
+step,before,removed,after,pct_removed
+Dubbele ritten (weekbestanden overlappen),11485364,0,11485364,0.0
+Ontbrekende tijd of station,11485364,1940,11483424,0.017
+Buiten gekozen periode,11483424,66070,11417354,0.575
+Eindtijd vóór starttijd,11417354,186,11417168,0.002
+Rit korter dan 1 minuut (fiets direct terug),11417168,16968,11400200,0.149
+Rit langer dan 24 uur (verloren/defect),11400200,4567,11395633,0.04

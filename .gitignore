@@ -1,0 +1,8 @@
+# Large raw data: stays on your own laptop
+data/raw/
+data/processed/rides_raw.parquet
+
+# System / Python junk
+.DS_Store
+__pycache__/
+.ipynb_checkpoints/
