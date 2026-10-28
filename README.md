@@ -9,7 +9,7 @@ Subvragen: afstand tot de metro en weer.
 Start.py              hoofdbestand dashboard (navigatie)
 app_pages/            de 5 pagina's van het dashboard
 notebooks/            01 inladen · 02 opschonen · 04 subvraag weer + metro-afstand (optioneel)
-weather_impact.py     gedeelde rekenfuncties (notebooks + dashboard)
+weather_impact.py     gedeelde rekenfuncties van het dashboard
 data/processed/       kleine bestanden die het dashboard gebruikt
 data/raw/             ruwe data: weather/ en metro/ staan op GitHub, tfl/ niet (te groot)
 ```
