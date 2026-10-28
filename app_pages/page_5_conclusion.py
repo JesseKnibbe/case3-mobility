@@ -20,8 +20,8 @@ def key_numbers():
         wi.build_station_day(pd.read_parquet(wi.PROC / "daily_station.parquet"), daily, stations)
 
     city_pct, n_rain = wi.citywide_effect(sd, threshold=1.0)
-    model, wind_col = wi.fit_daily_model(daily)
-    per_mm = (np.exp(model.params["precip_mm"]) - 1) * 100
+    model = wi.fit_rain_model(daily)
+    per_mm = model.params["precip_mm"]
 
     effect, source = wi.add_metro_distance(wi.rain_effect_per_station(sd, stations, threshold=1.0), stations)
     by_group = None
@@ -39,7 +39,7 @@ st.title("✅ Conclusion")
 st.subheader("De belangrijkste cijfers")
 k1, k2, k3 = st.columns(3)
 k1.metric("Regendag (≥1 mm) vs. droge dag", f"{city_pct:+.0f}% ritten", help=f"{n_rain} regendagen in 2022")
-k2.metric("Per mm regen", f"{per_mm:+.1f}% ritten", help="Regressie, gecorrigeerd voor temperatuur, weekdag, maand")
+k2.metric("Per mm regen", f"{per_mm:+,.0f} ritten".replace(",", "."), help="Lineaire regressie: ritten ~ neerslag")
 k3.metric("Verklaarde variatie model (R²)", f"{r2:.2f}")
 
 if by_group is not None and len(by_group):

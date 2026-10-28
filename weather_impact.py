@@ -168,3 +168,10 @@ def predict_rides(model, precip_mm, temp_mean, weekday, month, is_holiday=False,
     return (np.exp(pred["mean"].iloc[0]) * smear,
             np.exp(pred["obs_ci_lower"].iloc[0]) * smear,
             np.exp(pred["obs_ci_upper"].iloc[0]) * smear)
+
+
+def fit_rain_model(daily):
+    # Simple linear regression: rides = a + b * precipitation (used in the dashboard)
+    d = daily.dropna(subset=["precip_mm", "rides"])
+    d = d[d["rides"] >= 0.1 * d["rides"].median()]   # skip days with incomplete TfL data
+    return smf.ols("rides ~ precip_mm", data=d.astype({"rides": float})).fit()
