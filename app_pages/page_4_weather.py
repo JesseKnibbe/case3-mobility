@@ -86,8 +86,79 @@ if effect.empty:
     st.info("Te weinig data met deze filters. Verlaag de drempel of het minimum aantal vertrekken.")
     st.stop()
 
-tab_map, tab_metro, tab_hour, tab_time, tab_whatif = st.tabs(
-    ["🗺️ Kaart", "🚇 Afstand tot metro", "🕗 Per uur", "📈 Door het jaar", "🔮 Wat als?"])
+tab_main, tab_map, tab_metro, tab_hour, tab_time, tab_whatif = st.tabs(
+    ["❓ Hoofdvraag", "🗺️ Kaart", "🚇 Afstand tot metro", "🕗 Per uur", "📈 Door het jaar", "🔮 Wat als?"])
+
+# ---------------------------------------------------------------- tab 0: main research question
+with tab_main:
+    st.subheader("Zorgt regen ervoor dat de Bikeshare minder gebruikt wordt?")
+    CATS = ["droog (<0,2 mm)", "licht (0,2–2)", "matig (2–5)", "zwaar (>5)"]
+    CAT_COLORS = dict(zip(CATS, ["#9aa4b1", "#9ecae1", "#4292c6", "#08519c"]))
+    dm = daily_f[daily_f["day_type"].isin(day_types)].dropna(subset=["precip_mm"]).copy()
+    dm["rain_cat"] = pd.Categorical(dm["rain_cat"].astype(str), CATS, ordered=True)
+
+    # 1. Raw comparison: rides per day per rain category
+    st.markdown("**1. Ritten per dag per regencategorie**")
+    counts = dm["rain_cat"].value_counts()
+    dm["cat_label"] = dm["rain_cat"].map(lambda c: f"{c} (n={counts.get(c, 0)})")
+    fig = px.box(dm.sort_values("rain_cat"), x="cat_label", y="rides", color="rain_cat",
+                 color_discrete_map=CAT_COLORS, points="outliers", height=380,
+                 labels={"cat_label": "", "rides": "Ritten per dag", "rain_cat": "Regen"})
+    fig.update_layout(showlegend=False)
+    st.plotly_chart(fig)
+    st.caption("Let op: regendagen vallen vaker in herfst en winter, wanneer er sowieso minder gefietst wordt. "
+               "Deze vergelijking overschat het effect van regen daarom; zie stap 2.")
+
+    # 2. Fair comparison: vs. dry days in the same month and of the same day type
+    st.markdown("**2. Eerlijke vergelijking: t.o.v. droge dagen in dezelfde maand en van hetzelfde type dag**")
+    ref = (dm[dm["rain_cat"] == CATS[0]].groupby(["month", "day_type"])["rides"].median().rename("ref_dry"))
+    dm = dm.join(ref, on=["month", "day_type"])
+    dm["pct_vs_dry"] = (dm["rides"] / dm["ref_dry"] - 1) * 100
+    eff = (dm.dropna(subset=["pct_vs_dry"])
+             .groupby(["rain_cat", "day_type"], observed=True)["pct_vs_dry"].mean().reset_index())
+    eff_all = dm.dropna(subset=["pct_vs_dry"]).groupby("rain_cat", observed=True)["pct_vs_dry"].mean()
+
+    c1, c2 = st.columns(2)
+    fig = px.bar(eff_all.reset_index(), x="rain_cat", y="pct_vs_dry", color="rain_cat",
+                 color_discrete_map=CAT_COLORS, text=eff_all.map(lambda v: f"{v:+.0f}%").values, height=360,
+                 labels={"rain_cat": "", "pct_vs_dry": "% ritten t.o.v. droge dag"}, title="Alle dagen")
+    fig.update_traces(textposition="outside", cliponaxis=False)
+    fig.update_layout(showlegend=False)
+    fig.add_hline(y=0, line_color=INK, line_width=1)
+    c1.plotly_chart(fig)
+
+    fig = px.bar(eff, x="rain_cat", y="pct_vs_dry", color="day_type", barmode="group", height=360,
+                 color_discrete_map={"werkdag": "#08519c", "weekend/feestdag": "#9ecae1"},
+                 labels={"rain_cat": "", "pct_vs_dry": "% ritten t.o.v. droge dag", "day_type": ""},
+                 title="Werkdag vs. weekend/feestdag")
+    fig.add_hline(y=0, line_color=INK, line_width=1)
+    fig.update_layout(legend=dict(orientation="h", y=-0.15))
+    c2.plotly_chart(fig)
+    if CATS[3] in eff_all.index:
+        st.markdown(f"Op een dag met **zware regen (>5 mm)** worden gemiddeld **{eff_all[CATS[3]]:+.0f}%** ritten "
+                    f"gemaakt vergeleken met een droge dag in dezelfde maand.")
+
+    # 3. Correlation with the weather variables
+    st.markdown("**3. Samenhang tussen weer en aantal ritten**")
+    wind = wi.wind_column(dm)
+    rows = []
+    for col, label in [("precip_mm", "Neerslag (mm)"), ("temp_mean", "Temperatuur (°C)"), (wind, "Wind (km/u)")]:
+        if col and dm[col].notna().sum() > 10:
+            d = dm[[col, "rides"]].dropna()
+            r, p = stats.pearsonr(d[col], d["rides"])
+            rho, p2 = stats.spearmanr(d[col], d["rides"])
+            if np.isnan(r):        # e.g. a constant column
+                continue
+            rows.append({"Weersfactor": label, "Pearson r": round(r, 2), "Spearman ρ": round(rho, 2),
+                         "Significant (p<0,05)": "ja" if p2 < 0.05 else "nee"})
+    c1, c2 = st.columns([3, 2])
+    fig = px.scatter(dm, x="precip_mm", y="rides", color="temp_mean", color_continuous_scale="RdBu_r",
+                     opacity=.7, height=360, hover_data={"date": "|%d-%m-%Y"},
+                     labels={"precip_mm": "Neerslag (mm)", "rides": "Ritten per dag", "temp_mean": "Temp (°C)"})
+    c1.plotly_chart(fig)
+    c2.dataframe(pd.DataFrame(rows), hide_index=True)
+    c2.caption("Negatief = meer van deze factor, minder ritten. Temperatuur heeft vaak een sterker verband dan "
+               "regen, omdat het seizoen erin meeweegt; daarom is de eerlijke vergelijking in stap 2 belangrijk.")
 
 # ---------------------------------------------------------------- tab 1: map
 with tab_map:

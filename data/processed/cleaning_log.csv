@@ -5,3 +5,4 @@ Buiten gekozen periode,11483424,66070,11417354,0.575
 Eindtijd vóór starttijd,11417354,186,11417168,0.002
 Rit korter dan 1 minuut (fiets direct terug),11417168,16968,11400200,0.149
 Rit langer dan 24 uur (verloren/defect),11400200,4567,11395633,0.04
+"Dagen met onvolledige TfL-data: 10-09, 11-09",11395633,11,11395622,0.0

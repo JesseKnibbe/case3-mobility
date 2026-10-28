@@ -12,8 +12,9 @@ import statsmodels.formula.api as smf
 PROC = Path("data/processed")
 DRY_MM = 0.2                                   # below this a day counts as dry
 BANK = (51.5133, -0.0890)                      # Bank station, used as "city centre"
-METRO_FILE = PROC / "station_metro_distance.parquet"   # delivered by Jurre
+METRO_FILE = PROC / "station_metro_distance.parquet"   # made in notebook 04 (code by Jurre)
 METRO_STATIONS_FILE = PROC / "metro_stations.parquet"  # optional: tube stations for the map layer
+METRO_RAW_CSV = Path("data/raw/metro/metrogebruik_londen_2022.csv")  # raw metro data (on GitHub)
 DEFAULT_GROUPS = [0, 200, 500, np.inf]                 # metres, same groups as Jurre uses
 DEFAULT_LABELS = ["Close (≤200 m)", "Medium (200-500 m)", "Far (>500 m)"]
 
@@ -92,15 +93,26 @@ def citywide_effect(sd, threshold=1.0, day_types=None):
     return (rainy["departures"].sum() / rainy["expected"].sum() - 1) * 100, len(rainy)
 
 
+def load_metro_stations():
+    # Metro stations with location: the parquet from notebook 04, or straight from the raw CSV
+    if METRO_STATIONS_FILE.exists():
+        metro = pd.read_parquet(METRO_STATIONS_FILE)
+    elif METRO_RAW_CSV.exists():
+        metro = pd.read_csv(METRO_RAW_CSV).rename(columns={"station": "name"})
+    else:
+        return None
+    return metro.dropna(subset=["lat", "lon"]).reset_index(drop=True)
+
+
 def metro_distance_table(stations):
     # Distance from every bike station to its nearest tube station.
     # 1) Jurre's own file (station_metro_distance.parquet) if it exists;
-    # 2) otherwise computed here from metro_stations.parquet (columns: name, lat, lon);
+    # 2) otherwise computed here from the metro stations (parquet or raw CSV, columns: name, lat, lon);
     # 3) otherwise None.
     if METRO_FILE.exists():
         return pd.read_parquet(METRO_FILE)
-    if METRO_STATIONS_FILE.exists():
-        metro = pd.read_parquet(METRO_STATIONS_FILE).dropna(subset=["lat", "lon"])
+    metro = load_metro_stations()
+    if metro is not None:
         s = stations.dropna(subset=["lat", "lon"])
         # distance matrix: bike stations (rows) x tube stations (columns)
         dist = haversine_m(s["lat"].values[:, None], s["lon"].values[:, None],
@@ -133,6 +145,7 @@ def add_metro_distance(effect, stations):
 def fit_daily_model(daily):
     # Linear regression on log(rides): each coefficient ≈ relative change in rides
     d = daily.dropna(subset=["precip_mm", "temp_mean"]).copy()
+    d = d[d["rides"] >= 0.1 * d["rides"].median()]   # skip days with incomplete TfL data
     wc = wind_column(d)
     formula = "np.log(rides) ~ precip_mm + temp_mean + C(weekday) + C(month) + is_holiday"
     if wc and d[wc].notna().mean() > 0.8:
