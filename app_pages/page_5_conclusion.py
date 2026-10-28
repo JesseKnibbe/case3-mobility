@@ -70,3 +70,4 @@ Kensington and Chelsea) is het verlies groter (± 20%) dan in Islington en Tower
 - We hebben geen metrogebruik per dag, dus overstappen op de metro konden we niet direct meten.
 - Op 10 en 11 september 2022 ontbrak TfL-data; die dagen zijn uit de analyse gehaald.
 
+   """)
