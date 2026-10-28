@@ -5,6 +5,7 @@ pyarrow
 plotly
 scipy
 statsmodels
+shapely
 # only needed for the notebooks
 requests
 matplotlib

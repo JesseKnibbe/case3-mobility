@@ -175,3 +175,36 @@ def fit_rain_model(daily):
     d = daily.dropna(subset=["precip_mm", "rides"])
     d = d[d["rides"] >= 0.1 * d["rides"].median()]   # skip days with incomplete TfL data
     return smf.ols("rides ~ precip_mm", data=d.astype({"rides": float})).fit()
+
+
+# ---------------------------------------------------------------- London boroughs (districts)
+BOROUGHS_FILE = Path("data/raw/geo/london_boroughs.geojson")   # 33 boroughs, simplified outlines
+
+
+def load_boroughs():
+    import json
+    return json.loads(BOROUGHS_FILE.read_text())
+
+
+def station_borough(stations, geo):
+    # Which borough is each bike station in? (point-in-polygon)
+    from shapely.geometry import Point, shape
+    shapes = [(f["properties"]["name"], shape(f["geometry"])) for f in geo["features"]]
+    def find(lat, lon):
+        p = Point(lon, lat)
+        return next((name for name, poly in shapes if poly.contains(p)), None)
+    out = stations[["bikepoint_id", "lat", "lon"]].dropna().copy()
+    out["borough"] = [find(la, lo) for la, lo in zip(out["lat"], out["lon"])]
+    return out[["bikepoint_id", "borough"]]
+
+
+def borough_summary(sd, effect, stations, geo):
+    # Per borough: number of stations, rides per day and the rain effect
+    sb = station_borough(stations, geo)
+    n_days = sd["date"].nunique()
+    rides = (sd.merge(sb, on="bikepoint_id").groupby("borough")
+               .agg(stations=("bikepoint_id", "nunique"), departures=("departures", "sum")))
+    rides["rides_per_day"] = rides["departures"] / n_days
+    rain = (effect.merge(sb, on="bikepoint_id").groupby("borough")[["actual", "expected"]].sum())
+    rain["effect_pct"] = (rain["actual"] / rain["expected"] - 1) * 100
+    return rides[["stations", "rides_per_day"]].join(rain[["effect_pct"]]).reset_index()

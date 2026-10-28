@@ -1,14 +1,10 @@
 # Page 5: key numbers + conclusion text.
-# The text comes from teksten/conclusie.md, so it can be edited without touching Python.
-from pathlib import Path
-
+# Edit the conclusion text at the bottom of this file (inside st.markdown(""" ... """)).
 import numpy as np
 import pandas as pd
 import streamlit as st
 
 import weather_impact as wi
-
-TEXT_FILE = Path("teksten/conclusie.md")
 
 
 @st.cache_data
@@ -49,7 +45,33 @@ if by_group is not None and len(by_group):
         col.metric(str(group), f"{value:+.0f}%")
 
 st.divider()
-if TEXT_FILE.exists():
-    st.markdown(TEXT_FILE.read_text(encoding="utf-8"))
-else:
-    st.info("Schrijf de conclusie in `teksten/conclusie.md`.")
+
+# ---------------------------------------------------------------- conclusion text (edit here)
+# Markdown: ### = heading, **text** = bold, - = bullet. Do not type three double quotes inside the text.
+st.markdown("""
+### Antwoord op de hoofdvraag
+*Zorgt regen ervoor dat de Bikeshare minder gebruikt wordt?*
+
+**Ja.** Op een regendag (≥ 1 mm) worden in 2022 gemiddeld **18% minder ritten** gemaakt dan op een vergelijkbare
+droge dag (zelfde maand, zelfde type dag). Elke extra millimeter regen kost ongeveer **1.000 ritten per dag**.
+Bij zware regen (> 5 mm) is het verlies het grootst.
+
+### Subvraag: afstand tot de metro (Jurre)
+✏️ Vul hier de conclusie van Jurre in.
+
+### Subvraag: weer (Jesse)
+Regen raakt niet elk stadsdeel even hard: in de drukke, toeristische delen in het westen (Westminster,
+Kensington and Chelsea) is het verlies groter (± 20%) dan in Islington en Tower Hamlets (± 16–17%).
+De afstand tot een metrostation maakt voor het effect van regen **geen** verschil (Close, Medium en Far alle drie
+± 18–19%). Dat mensen bij regen massaal de metro nemen, zien we in de data dus niet terug.
+
+### Kanttekeningen
+- Het weer is per dag gemeten, niet per uur, en met één weerstation voor heel Londen.
+- Neerslag alleen verklaart maar een klein deel van de verschillen tussen dagen (R² ≈ 0,11): seizoen en
+  temperatuur spelen een grotere rol.
+- We hebben geen metrogebruik per dag, dus overstappen op de metro konden we niet direct meten.
+- Op 10 en 11 september 2022 ontbrak TfL-data; die dagen zijn uit de analyse gehaald.
+
+### Aanbevelingen
+✏️ Bijvoorbeeld: "TfL kan op dagen met veel regen minder fietsen herverdelen in Westminster en Kensington ..."
+""")

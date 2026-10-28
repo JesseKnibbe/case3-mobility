@@ -27,8 +27,61 @@ def load_data():
 
 
 @st.cache_data
+def borough_table(sd, effect, stations):
+    b = wi.borough_summary(sd, effect, stations, wi.load_boroughs())
+    # with fewer than 10 stations the percentage is unreliable: not coloured on the map
+    b["loss_pct"] = (-b["effect_pct"]).clip(lower=0).where(b["stations"] >= 10)
+    b["Effect regen"] = b["effect_pct"].map(lambda v: f"{v:+.1f}%")
+    return b
+
+
+@st.cache_data
 def station_effect(sd, stations, threshold, day_types):
     return wi.rain_effect_per_station(sd, stations, threshold, list(day_types), min_per_day=5, min_rain_days=5)
+
+
+def borough_map(geo, b, col, scale, title):
+    # Draw the boroughs as filled shapes. Plain x/y plot (lon/lat): needs no map tiles or internet.
+    from plotly.colors import sample_colorscale
+    vals = b.set_index("borough")[col]
+    lo, hi = vals.min(), vals.max()
+    fig = go.Figure()
+    for f in geo["features"]:
+        name = f["properties"]["name"]
+        polys = f["geometry"]["coordinates"]
+        polys = [polys] if f["geometry"]["type"] == "Polygon" else polys
+        has_data = name in vals.index and pd.notna(vals[name])
+        if has_data:
+            t = 0.5 if hi == lo else (vals[name] - lo) / (hi - lo)
+            fill = sample_colorscale(scale, [0.15 + 0.85 * t])[0]
+            row = b.set_index("borough").loc[name]
+            hover = (f"<b>{name}</b><br>Stations: {row['stations']}<br>Ritten per dag: {row['rides_per_day']:,.0f}"
+                     f"<br>Effect regen: {row['effect_pct']:+.1f}%").replace(",", ".")
+        elif name in vals.index:
+            fill, hover = "#dfe2e6", f"{name}<br>te weinig stations voor een betrouwbaar percentage"
+        else:
+            fill, hover = "#f1f2f4", f"{name}<br>geen Bikeshare-stations"
+        for poly in polys:
+            ring = poly[0]
+            fig.add_trace(go.Scatter(x=[c[0] for c in ring], y=[c[1] for c in ring], fill="toself", mode="lines",
+                                     line=dict(color="white", width=1), fillcolor=fill, hoverinfo="text",
+                                     text=hover, hoveron="fills", showlegend=False))
+    # invisible trace that only draws the colour bar
+    fig.add_trace(go.Scatter(x=[None], y=[None], mode="markers", showlegend=False, hoverinfo="skip",
+                             marker=dict(colorscale=[[0, sample_colorscale(scale, [0.15])[0]], [1, sample_colorscale(scale, [1.0])[0]]],
+                                         cmin=lo, cmax=hi, color=[lo], showscale=True,
+                                         colorbar=dict(title=title))))
+    # zoom to the boroughs with stations
+    with_data = [f for f in geo["features"] if f["properties"]["name"] in vals.dropna().index]
+    xs = [c[0] for f in with_data for poly in ([f["geometry"]["coordinates"]] if f["geometry"]["type"] == "Polygon"
+          else f["geometry"]["coordinates"]) for c in poly[0]]
+    ys = [c[1] for f in with_data for poly in ([f["geometry"]["coordinates"]] if f["geometry"]["type"] == "Polygon"
+          else f["geometry"]["coordinates"]) for c in poly[0]]
+    pad = 0.01
+    fig.update_xaxes(visible=False, range=[min(xs) - pad, max(xs) + pad])
+    fig.update_yaxes(visible=False, range=[min(ys) - pad, max(ys) + pad], scaleanchor="x", scaleratio=1.6)
+    fig.update_layout(height=560, margin=dict(l=0, r=0, t=0, b=0), plot_bgcolor="white")
+    return fig
 
 
 daily, stations, sd = load_data()
@@ -90,35 +143,28 @@ with tab_main:
         st.markdown(f"Op een dag met **zware regen (>5 mm)** worden gemiddeld **{eff[CATS[3]]:+.0f}%** ritten "
                     f"gemaakt vergeleken met een droge dag in dezelfde maand.")
 
-# ---------------------------------------------------------------- tab 2: map
+# ---------------------------------------------------------------- tab 2: map per borough
 with tab_map:
-    st.subheader("Welke stations verliezen de meeste ritten bij regen?")
-    st.caption("Kleur = verandering in vertrekken op regendagen (donkerder = groter verlies). "
-               "Grootte = drukte op droge dagen.")
+    st.subheader("Ritten en effect van regen per stadsdeel (borough)")
     if effect.empty:
         st.info("Te weinig data met deze filters.")
     else:
-        m = effect.copy()
-        m["loss_pct"] = (-m["effect_pct"]).clip(lower=0)
-        m["Effect regen"] = m["effect_pct"].map(lambda v: f"{v:+.1f}%")
-        common = dict(lat="lat", lon="lon", color="loss_pct", size="dry_departures_per_day", size_max=14,
-                      color_continuous_scale="Blues", hover_name="name", zoom=11, height=600,
-                      hover_data={"Effect regen": True, "lat": False, "lon": False, "loss_pct": False,
-                                  "dry_departures_per_day": ":.0f"},
-                      labels={"loss_pct": "Verlies (%)", "dry_departures_per_day": "Vertrekken/droge dag"})
-        try:  # plotly >= 5.24
-            fig = px.scatter_map(m, map_style="carto-positron", **common)
-        except AttributeError:  # older plotly
-            fig = px.scatter_mapbox(m, mapbox_style="carto-positron", **common)
-        fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
+        geo = wi.load_boroughs()
+        b = borough_table(sd, effect, stations)
+        choice = st.radio("Kleur de kaart op", ["Effect van regen", "Ritten per dag"], horizontal=True)
+        if choice == "Effect van regen":
+            col, scale, title = "loss_pct", "Blues", "Verlies bij regen (%)"
+        else:
+            col, scale, title = "rides_per_day", "Greens", "Ritten per dag"
+        fig = borough_map(geo, b, col, scale, title)
         st.plotly_chart(fig)
+        st.caption("Alleen stadsdelen met Bikeshare-stations zijn ingekleurd (bij effect van regen: minstens 10 stations). "
+                   "Effect van regen = vertrekken op regendagen t.o.v. droge dagen in dezelfde maand.")
 
-        cols = {"name": "Station", "effect_pct": "Effect (%)", "dry_departures_per_day": "Vertrekken/droge dag"}
-        c1, c2 = st.columns(2)
-        c1.markdown("**Meest gevoelig voor regen**")
-        c1.dataframe(effect.nsmallest(10, "effect_pct")[list(cols)].rename(columns=cols).round(1), hide_index=True)
-        c2.markdown("**Minst gevoelig voor regen**")
-        c2.dataframe(effect.nlargest(10, "effect_pct")[list(cols)].rename(columns=cols).round(1), hide_index=True)
+        tbl = (b.sort_values("effect_pct")[["borough", "stations", "rides_per_day", "effect_pct"]]
+                 .rename(columns={"borough": "Stadsdeel", "stations": "Stations",
+                                  "rides_per_day": "Ritten per dag", "effect_pct": "Effect regen (%)"}))
+        st.dataframe(tbl.round({"Ritten per dag": 0, "Effect regen (%)": 1}), hide_index=True)
 
 # ---------------------------------------------------------------- tab 3: prediction (precipitation only)
 with tab_model:

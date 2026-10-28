@@ -8,7 +8,6 @@ Subvragen: afstand tot de metro (Jurre) en weer (Jesse).
 ```
 Start.py              hoofdbestand dashboard (navigatie)
 app_pages/            de 5 pagina's van het dashboard
-teksten/              teksten die je zonder Python kunt aanpassen (conclusie)
 notebooks/            01 inladen · 02 opschonen · 04 subvraag weer + metro-afstand (optioneel)
 weather_impact.py     gedeelde rekenfuncties (notebooks + dashboard)
 data/processed/       kleine bestanden die het dashboard gebruikt
