@@ -1,7 +1,7 @@
 # Case 3 – Bikeshare in Londen
 
 **Hoofdvraag:** Zorgt regen ervoor dat de Bikeshare minder gebruikt wordt?
-Subvragen: afstand tot de metro (Jurre) en weer (Jesse).
+Subvragen: afstand tot de metro en weer.
 
 ## Structuur
 
