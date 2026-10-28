@@ -9,3 +9,4 @@ statsmodels
 requests
 matplotlib
 holidays
+scikit-learn

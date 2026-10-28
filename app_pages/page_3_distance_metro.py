@@ -1,6 +1,6 @@
-# Page: sub-question metro distance (Jurre).
-# This is a STARTING POINT: it already works as soon as data/processed/metro_stations.parquet exists
-# (columns: name, lat, lon). Replace/extend the sections marked "TODO Jurre".
+# Page 3: sub-question distance to the metro (Jurre).
+# Uses data/processed/station_metro_distance.parquet + metro_stations.parquet (made in notebook 04, section 4).
+# Extend the section marked "TODO Jurre".
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -10,8 +10,8 @@ from scipy import stats
 
 import weather_impact as wi
 
-st.set_page_config(page_title="Afstand tot metro", layout="wide")
 RAIN = "#2a6fdb"
+GROUP_COLORS = {"Close (≤200 m)": "#2ca02c", "Medium (200-500 m)": "#ff7f0e", "Far (>500 m)": "#d62728"}
 
 
 @st.cache_data
@@ -25,25 +25,15 @@ def load():
 
 stations, totals, metro_dist, metro = load()
 
-st.title("🚇 Wordt de Bikeshare minder gebruikt dicht bij de metro?")
+st.title("🚇 Distance from Metro")
+st.subheader("Wordt de Bikeshare minder gebruikt dicht bij de metro?")
 
 if metro_dist is None:
-    st.info(
-        "Nog geen metrodata. Sla de metrostations op als `data/processed/metro_stations.parquet` "
-        "met de kolommen `name`, `lat` en `lon`. De afstand tot het dichtstbijzijnde metrostation "
-        "wordt dan automatisch berekend (ook voor de weerpagina)."
-    )
-    st.code(
-        '''# Example (in a notebook): doogal CSV -> metro_stations.parquet
-import pandas as pd
-m = pd.read_csv("data/raw/metro/London stations.csv")          # file from doogal.co.uk
-m = m.rename(columns={"Station": "name", "Latitude": "lat", "Longitude": "lon"})
-m[["name", "lat", "lon"]].to_parquet("data/processed/metro_stations.parquet", index=False)''',
-        language="python",
-    )
+    st.info("Nog geen metrodata. Draai notebook 04 (sectie 4): die maakt `station_metro_distance.parquet` "
+            "en `metro_stations.parquet` in `data/processed/`.")
     st.stop()
 
-df = totals.merge(metro_dist, on="bikepoint_id", how="inner").dropna(subset=["lat", "lon", "metro_distance_m"])
+df = totals.drop(columns=["metro_group"], errors="ignore").merge(metro_dist, on="bikepoint_id", how="inner").dropna(subset=["lat", "lon", "metro_distance_m"])
 
 # ---------------------------------------------------------------- sidebar
 st.sidebar.header("Filters")
@@ -64,7 +54,8 @@ g = (df.groupby("metro_group", observed=True)
 g["text"] = g.apply(lambda r: f"{r['per_day']:.1f}  (n={r['stations']})", axis=1)
 fig = px.bar(g, x="metro_group", y="per_day", text="text", height=380,
              labels={"metro_group": "Afstand tot dichtstbijzijnde metrostation", "per_day": "Gem. vertrekken per dag"})
-fig.update_traces(marker_color=RAIN, textposition="outside", cliponaxis=False)
+fig.update_traces(textposition="outside", cliponaxis=False)
+fig.update_traces(marker_color=[GROUP_COLORS.get(str(x), RAIN) for x in g["metro_group"]])
 st.plotly_chart(fig)
 
 rho, p = stats.spearmanr(df["metro_distance_m"], df["departures_per_day"])
@@ -77,13 +68,13 @@ common = dict(color="metro_group", size="departures_per_day", size_max=14, hover
               hover_data={"metro_distance_m": ":.0f", "departures_per_day": ":.1f"}, height=600,
               labels={"metro_group": "Afstand", "metro_distance_m": "Afstand (m)",
                       "departures_per_day": "Vertrekken/dag"},
-              color_discrete_sequence=px.colors.sequential.Blues_r[1:])
+              color_discrete_map=GROUP_COLORS, category_orders={"metro_group": list(GROUP_COLORS)})
 if plain:
     fig = px.scatter(df, x="lon", y="lat", **common)
     fig.update_yaxes(scaleanchor="x", scaleratio=1.6, visible=False)
     fig.update_xaxes(visible=False)
     metro_trace = go.Scatter(x=metro["lon"], y=metro["lat"], mode="markers", name="Metrostation",
-                             marker=dict(size=7, color="#d62728", symbol="square"), text=metro["name"],
+                             marker=dict(size=7, color="#1f1f1f", symbol="square"), text=metro["name"],
                              hoverinfo="text") if metro is not None else None
 else:
     try:
@@ -93,7 +84,7 @@ else:
         fig = px.scatter_mapbox(df, lat="lat", lon="lon", zoom=11, mapbox_style="carto-positron", **common)
         cls = go.Scattermapbox
     metro_trace = cls(lat=metro["lat"], lon=metro["lon"], mode="markers", name="Metrostation",
-                      marker=dict(size=8, color="#d62728"), text=metro["name"],
+                      marker=dict(size=8, color="#1f1f1f"), text=metro["name"],
                       hoverinfo="text") if metro is not None else None
 if metro_trace is not None:
     fig.add_trace(metro_trace)

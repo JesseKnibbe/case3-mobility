@@ -1,4 +1,4 @@
-# Page: weather sub-question (Jesse). Part of the team dashboard; start the whole app with: streamlit run Start.py
+# Page 4: weather sub-question (Jesse). Start the whole dashboard with: streamlit run Start.py
 # Requires notebooks 01 + 02 (and preferably 04) to have been run, so data/processed/ exists.
 import numpy as np
 import pandas as pd
@@ -10,7 +10,6 @@ from scipy import stats
 
 import weather_impact as wi
 
-st.set_page_config(page_title="Regen & Bikeshare", layout="wide")
 
 RAIN = "#2a6fdb"     # rainy days
 DRY = "#9aa4b1"      # dry days
@@ -31,7 +30,7 @@ def load_data():
         sd = pd.read_parquet(sd_file)
     else:  # notebook 04 not run yet: build it here
         sd = wi.build_station_day(pd.read_parquet(wi.PROC / "daily_station.parquet"), daily, stations)
-    metro = pd.read_parquet(wi.METRO_STATIONS_FILE) if wi.METRO_STATIONS_FILE.exists() else None
+    metro = wi.load_metro_stations()
     return daily, hourly, stations, sd, metro
 
 
@@ -64,7 +63,8 @@ in_months = lambda df: df[df["date"].dt.month.between(*months)]
 sd_f, daily_f, hourly_f = in_months(sd), in_months(daily), in_months(hourly)
 
 # ---------------------------------------------------------------- header + KPIs
-st.title("Waar en bij wie heeft regen de meeste impact?")
+st.title("🌧️ Weather vs Rental")
+st.subheader("Waar en bij wie heeft regen de meeste impact?")
 st.caption("Elke regendag wordt vergeleken met droge dagen in **dezelfde maand** en van **hetzelfde type dag**, "
            "zodat seizoen en weekend het effect niet vertekenen.")
 
@@ -139,8 +139,7 @@ with tab_map:
 with tab_metro:
     st.subheader("Verliezen stations dicht bij de metro meer ritten bij regen?")
     if dist_source == "centre":
-        st.warning("Nog geen metrodata gevonden (`data/processed/metro_stations.parquet` of "
-                   "`station_metro_distance.parquet`, zie de pagina van Jurre). "
+        st.warning("Nog geen metrodata gevonden: draai notebook 04 (sectie 4). "
                    "Tijdelijk gegroepeerd op afstand tot het centrum (Bank).")
     dist_col = "metro_distance_m" if "metro_distance_m" in effect.columns else "centre_distance_km"
     dist_label = "Afstand tot dichtstbijzijnde metrostation (m)" if dist_col == "metro_distance_m" \

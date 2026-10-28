@@ -1,6 +1,10 @@
-# Large raw data: stays on your own laptop
-data/raw/
+# Large data: too big for GitHub, notebook 01 recreates it
+# - data/raw/tfl: about 1.5 GB, downloaded automatically by notebook 01
+# - rides_raw.parquet: about 180 MB (GitHub max = 100 MB), created by notebook 01
+data/raw/tfl/
 data/processed/rides_raw.parquet
+
+# Small raw data (weather, metro) DOES go to GitHub, so everyone can run the notebooks
 
 # System / Python junk
 .DS_Store

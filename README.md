@@ -1,34 +1,29 @@
 # Case 3 – Bikeshare in Londen
 
 **Hoofdvraag:** Zorgt regen ervoor dat de Bikeshare minder gebruikt wordt?
-
-- Subvraag metro-afstand: Jurre
-- Subvraag weer: Jesse
+Subvragen: afstand tot de metro (Jurre) en weer (Jesse).
 
 ## Structuur
 
 ```
-Start.py                     startpagina (onderzoeksvraag, data, opschonen)
-pages/1_Metro_afstand.py     subvraag Jurre
-pages/2_Weer_en_regen.py     subvraag Jesse
-weather_impact.py            gedeelde rekenfuncties
-01–04_*.ipynb                notebooks: inladen, opschonen, analyse, subvraag weer
-data/processed/              kleine bestanden die het dashboard gebruikt
-data/raw/                    ruwe data (NIET op GitHub, zie .gitignore)
+Start.py              hoofdbestand dashboard (navigatie)
+app_pages/            de 5 pagina's van het dashboard
+teksten/              teksten die je zonder Python kunt aanpassen (conclusie)
+notebooks/            01 inladen · 02 opschonen · 04 subvraag weer + metro-afstand (optioneel)
+weather_impact.py     gedeelde rekenfuncties (notebooks + dashboard)
+data/processed/       kleine bestanden die het dashboard gebruikt
+data/raw/             ruwe data: weather/ en metro/ staan op GitHub, tfl/ niet (te groot)
 ```
 
-## Lokaal draaien
+## Draaien
 
 ```bash
 pip install -r requirements.txt
 streamlit run Start.py
 ```
 
-Draai eerst notebook 01 en 02 (en 04), zodat `data/processed/` gevuld is.
+Volgorde notebooks: 01 → 02 (→ 04, optioneel). De analyse van de hoofdvraag staat in het dashboard
+(pagina *Weather vs Rental*, tabblad *Hoofdvraag*).
 
-## Metrodata
-
-Sla de metrostations op als `data/processed/metro_stations.parquet` (kolommen `name`, `lat`, `lon`).
-De afstand van elk fietsstation tot het dichtstbijzijnde metrostation wordt dan automatisch berekend.
-Wil je eigen afstandsgroepen, sla dan `data/processed/station_metro_distance.parquet` op met
-`bikepoint_id`, `metro_distance_m` en `metro_group`; dat bestand gaat dan voor.
+De weer- en metrodata staan in `data/raw/` op GitHub. De TfL-ritdata (±1,5 GB) en `rides_raw.parquet` (±180 MB)
+zijn te groot voor GitHub: notebook 01 downloadt en maakt ze automatisch opnieuw aan (eenmalig ±10–15 minuten).
