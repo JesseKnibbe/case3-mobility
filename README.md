@@ -14,8 +14,7 @@ data/processed/       kleine bestanden die het dashboard gebruikt
 data/raw/             ruwe data: weather/ en metro/ staan op GitHub, tfl/ niet (te groot)
 ```
 
-Volgorde notebooks: 01 → 02 De analyse van de hoofdvraag staat in het dashboard
-(pagina *Weather vs Rental*, tabblad *Hoofdvraag*).
+Volgorde notebooks: 01 → 02 Alle analyses staat in het dashboard
 
 De weer- en metrodata staan in `data/raw/` op GitHub. De TfL-ritdata (±1,5 GB) en `rides_raw.parquet` (±180 MB)
 zijn te groot voor GitHub: notebook 01 downloadt en maakt ze automatisch opnieuw aan (eenmalig ±10–15 minuten).
