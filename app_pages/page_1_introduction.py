@@ -24,7 +24,7 @@ st.markdown(
 
 **Subvragen**
 - **Afstand tot de metro** *(Jurre)*: wordt de Bikeshare minder gebruikt bij stations dicht bij een metrostation?
-- **Weer** *(Jesse)*: waar en bij wie heeft regen de meeste impact, en verliezen stations dicht bij de metro
+- **Weer** Waar en bij wie heeft regen de meeste impact, en verliezen stations dicht bij de metro
   meer ritten als het regent?
 """
 )
@@ -50,4 +50,3 @@ st.table(pd.DataFrame([
      "Inhoud": "Metrostations met locatie, zone en aantal reizigers"},
 ]))
 
-st.info("👈 Gebruik het menu links om door het onderzoek te gaan.")
