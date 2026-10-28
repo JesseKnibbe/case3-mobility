@@ -46,7 +46,7 @@ if by_group is not None and len(by_group):
 
 st.divider()
 
-# ---------------------------------------------------------------- conclusion text (edit here)
+# ---------------------------------------------------------------- conclusion text 
 # Markdown: ### = heading, **text** = bold, - = bullet. Do not type three double quotes inside the text.
 st.markdown("""
 ### Antwoord op de hoofdvraag
@@ -57,13 +57,11 @@ droge dag (zelfde maand, zelfde type dag). Elke extra millimeter regen kost onge
 Bij zware regen (> 5 mm) is het verlies het grootst.
 
 ### Subvraag: afstand tot de metro (Jurre)
-✏️ Vul hier de conclusie van Jurre in.
 
-### Subvraag: weer (Jesse)
+
+### Subvraag: Weer
 Regen raakt niet elk stadsdeel even hard: in de drukke, toeristische delen in het westen (Westminster,
 Kensington and Chelsea) is het verlies groter (± 20%) dan in Islington en Tower Hamlets (± 16–17%).
-De afstand tot een metrostation maakt voor het effect van regen **geen** verschil (Close, Medium en Far alle drie
-± 18–19%). Dat mensen bij regen massaal de metro nemen, zien we in de data dus niet terug.
 
 ### Kanttekeningen
 - Het weer is per dag gemeten, niet per uur, en met één weerstation voor heel Londen.
@@ -72,6 +70,3 @@ De afstand tot een metrostation maakt voor het effect van regen **geen** verschi
 - We hebben geen metrogebruik per dag, dus overstappen op de metro konden we niet direct meten.
 - Op 10 en 11 september 2022 ontbrak TfL-data; die dagen zijn uit de analyse gehaald.
 
-### Aanbevelingen
-✏️ Bijvoorbeeld: "TfL kan op dagen met veel regen minder fietsen herverdelen in Westminster en Kensington ..."
-""")
