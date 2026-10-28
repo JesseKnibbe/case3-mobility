@@ -142,33 +142,6 @@ def add_metro_distance(effect, stations):
     return out, "centre"
 
 
-def fit_daily_model(daily):
-    # Linear regression on log(rides): each coefficient ≈ relative change in rides
-    d = daily.dropna(subset=["precip_mm", "temp_mean"]).copy()
-    d = d[d["rides"] >= 0.1 * d["rides"].median()]   # skip days with incomplete TfL data
-    wc = wind_column(d)
-    formula = "np.log(rides) ~ precip_mm + temp_mean + C(weekday) + C(month) + is_holiday"
-    if wc and d[wc].notna().mean() > 0.8:
-        d[wc] = d[wc].fillna(d[wc].median())
-        formula = formula.replace("temp_mean", f"temp_mean + {wc}")
-    else:
-        wc = None
-    return smf.ols(formula, data=d).fit(), wc
-
-
-def predict_rides(model, precip_mm, temp_mean, weekday, month, is_holiday=False, wind=None, wind_col=None):
-    # Predict the number of rides for one hypothetical day (what-if tool)
-    row = {"precip_mm": precip_mm, "temp_mean": temp_mean, "weekday": weekday,
-           "month": month, "is_holiday": is_holiday}
-    if wind_col:
-        row[wind_col] = wind
-    pred = model.get_prediction(pd.DataFrame([row])).summary_frame(alpha=0.05)
-    # smearing correction: exp(log-prediction) underestimates the mean slightly
-    smear = np.mean(np.exp(model.resid))
-    return (np.exp(pred["mean"].iloc[0]) * smear,
-            np.exp(pred["obs_ci_lower"].iloc[0]) * smear,
-            np.exp(pred["obs_ci_upper"].iloc[0]) * smear)
-
 
 def fit_rain_model(daily):
     # Simple linear regression: rides = a + b * precipitation (used in the dashboard)
