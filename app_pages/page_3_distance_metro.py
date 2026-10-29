@@ -1,8 +1,5 @@
 # Page 3: sub-question distance to the metro (Jurre)
 import streamlit as st
-
-st.title("🚇 Distance from Metro")
-
 import numpy as np
 import pandas as pd
 import plotly.express as px
