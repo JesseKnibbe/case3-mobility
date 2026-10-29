@@ -139,28 +139,48 @@ with tab_line2:
 
           monthly_view = monthly[monthly["day_type"].isin(day_types)]
                  
-          fig = px.line(monthly_view, x="month", y="departures_per_station_day",
-              color="metro_distance", line_dash="day_type", markers=True,
-              color_discrete_map=COLORS,
-              line_dash_map={"Weekdag": "solid", "Weekend": "dash"},
-              category_orders={"metro_distance": LABELS, "day_type": DAY_TYPES},
+          DASH = {"Weekdag": "solid", "Weekend": "dash"}
+          both = keuze == "Weekdagen en weekend"
+
+          fig = go.Figure()
+
+          # one legend entry per distance category (color)
+          for cat in LABELS:
+              first = True
+              for dt in day_types:
+                  d = (monthly_view[(monthly_view["metro_distance"] == cat) &
+                          (monthly_view["day_type"] == dt)]
+                       .sort_values("month"))
+                  fig.add_trace(go.Scatter(
+                      x=d["month"], y=d["departures_per_station_day"],
+                      mode="lines+markers",
+                      name=cat, legendgroup=cat, showlegend=first,
+                      line=dict(color=COLORS[cat], dash=DASH[dt]),
+                      opacity=0.5 if (both and dt == "Weekend") else 1,
+                      hovertemplate=f"{cat} ({dt.lower()})<br>%{{x|%b}}: %{{y:.1f}}<extra></extra>",
+                  ))
+                  first = False
+
+          # legend entries explaining the line style (only when both are shown)
+          if both:
+              for dt in DAY_TYPES:
+                  fig.add_trace(go.Scatter(
+                      x=[None], y=[None], mode="lines",
+                      name=dt, legendgroup="stijl",
+                      line=dict(color="grey", dash=DASH[dt]),
+                      hoverinfo="skip",
+                  ))
+
+          fig.update_layout(
               height=450,
-              labels={"month": "Maand",
-                      "departures_per_station_day": "Gem. verhuringen per station per dag",
-                      "metro_distance": "", "day_type": ""})
+              showlegend=True,
+              legend=dict(title_text=""),
+              xaxis_title="Maand",
+              yaxis_title="Gem. verhuringen per station per dag",
+          )
           fig.update_xaxes(dtick="M1", tickformat="%b")
           fig.update_yaxes(rangemode="tozero")
-          fig.update_layout(
-              showlegend=True,
-              legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="left", x=0),
-          )
-          
-        # fade the weekend lines, but only when both are shown together
-          if keuze == "Weekdagen en weekend":
-              for trace in fig.data:
-                  if trace.line.dash == "dash":
-                      trace.opacity = 0.4
-          
+
           st.plotly_chart(fig)
 
 
