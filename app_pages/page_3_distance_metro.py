@@ -124,9 +124,10 @@ with tab_map2:
 with tab_line2:
           st.markdown("**Verhuringen per maand (2022), naar afstand tot de metro**")
           
-          keuze = st.selectbox(
+          keuze = st.sidebar.selectbox(
               "Toon",
               ["Weekdagen en weekend", "Alleen weekdagen", "Alleen weekend"],
+              key="weekdag_weekend",
           )
 
           if keuze == "Alleen weekdagen":
@@ -137,9 +138,7 @@ with tab_line2:
               day_types = DAY_TYPES
 
           monthly_view = monthly[monthly["day_type"].isin(day_types)]
-          
-          
-          
+                 
           fig = px.line(monthly_view, x="month", y="departures_per_station_day",
               color="metro_distance", line_dash="day_type", markers=True,
               color_discrete_map=COLORS,
@@ -150,6 +149,7 @@ with tab_line2:
                       "departures_per_station_day": "Gem. verhuringen per station per dag",
                       "metro_distance": "", "day_type": ""})
           fig.update_xaxes(dtick="M1", tickformat="%b")
+          fig.update_yaxes(rangemode="tozero")
 
         # fade the weekend lines, but only when both are shown together
           if keuze == "Weekdagen en weekend":
