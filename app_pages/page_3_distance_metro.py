@@ -130,3 +130,11 @@ fig.update_layout(showlegend=False)
 c1.plotly_chart(fig)
 c2.dataframe(summary.rename(columns={"metro_distance": "Groep", "stations": "Stations",
                                      "mean": "Gemiddeld per dag", "median": "Mediaan per dag"}), hide_index=True)
+
+
+# ------------------------------------------------------------------- edit into tabs from this point onward:
+
+tab_map2, tab_line2, tab_summary = st.tabs(["🗺️ Kaart", "❓ Hoofdvraag", "🔮 Averages"])
+
+
+
