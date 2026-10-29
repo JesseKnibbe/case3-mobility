@@ -79,7 +79,7 @@ monthly = load_monthly(bikes)
 
 @st.cache_data
 def load_station_perday(bikes: pd.DataFrame) -> pd.DataFrame:
-    sd = pd.read_parquet("station_day.parquet")
+    sd = pd.read_parquet(wi.PROC / "station_day.parquet")
     sd["date"] = pd.to_datetime(sd["date"])
     sd = sd[sd["date"].dt.year == 2022]
     sd["day_type"] = sd["date"].dt.dayofweek.ge(5).map({True: "Weekend", False: "Weekdag"})
