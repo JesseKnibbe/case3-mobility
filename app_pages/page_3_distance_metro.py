@@ -81,9 +81,6 @@ monthly = load_monthly(bikes)
 st.title("🚇 Distance from Metro")
 st.subheader("Wordt de Bikeshare minder gebruikt dicht bij de metro?")
 
-st.write(bikes["metro_distance"].value_counts(dropna=False))
-st.write(monthly["metro_distance"].value_counts(dropna=False))
-
 # ---------------------------------------------------------------- key figures
 counts = bikes["metro_distance"].value_counts()
 k1, k2, k3, k4 = st.columns(4)
@@ -153,7 +150,11 @@ with tab_line2:
                       "metro_distance": "", "day_type": ""})
           fig.update_xaxes(dtick="M1", tickformat="%b")
           fig.update_yaxes(rangemode="tozero")
-
+          fig.update_layout(
+              showlegend=True,
+              legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="left", x=0),
+          )
+          
         # fade the weekend lines, but only when both are shown together
           if keuze == "Weekdagen en weekend":
               for trace in fig.data:
