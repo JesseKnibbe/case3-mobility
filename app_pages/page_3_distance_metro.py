@@ -46,7 +46,7 @@ bikes, metro = load()
 
 @st.cache_data
 def load_monthly(bikes: pd.DataFrame) -> pd.DataFrame:
-    sd = pd.read_parquet("station_day.parquet")
+    sd = pd.read_parquet(wi.PROC / "station_day.parquet")
     sd["date"] = pd.to_datetime(sd["date"])
     sd = sd[sd["date"].dt.year == 2022]
 
