@@ -133,6 +133,12 @@ with tab_line2:
                       "departures_per_station_day": "Gem. verhuringen per station per dag",
                       "metro_distance": ""})
           fig.update_xaxes(dtick="M1", tickformat="%b")
+
+          # make the weekend lines (dashed) more transparent
+          for trace in fig.data:
+              if trace.line.dash == "dash":
+                  trace.opacity = 0.5
+          
           st.plotly_chart(fig)
 
 
