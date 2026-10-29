@@ -56,8 +56,8 @@ st.markdown("""
 droge dag (zelfde maand, zelfde type dag). Elke extra millimeter regen kost ongeveer **1.000 ritten per dag**.
 Bij zware regen (> 5 mm) is het verlies het grootst.
 
-### Subvraag: afstand tot de metro (Jurre)
-Stations dicht bij een metrostation (≤200 m) worden juist méér gebruikt: mediaan 44 verhuringen per dag, tegen 32 bij stations verder dan 500 m. Fiets en metro lijken elkaar aan te vullen.”
+### Subvraag: afstand tot de metro
+Stations dicht bij een metrostation (≤200 m) worden juist méér gebruikt: mediaan 44 verhuringen per dag, tegen 32 bij stations verder dan 500 m. Fiets en metro stations lijken onder meer geplaatst om samen gebruik van te maken.”
 
 ### Subvraag: Weer
 Regen raakt niet elk stadsdeel even hard: in de drukke, toeristische delen in het westen (Westminster,
@@ -69,5 +69,7 @@ Kensington and Chelsea) is het verlies groter (± 20%) dan in Islington en Tower
   temperatuur spelen een grotere rol.
 - We hebben geen metrogebruik per dag, dus overstappen op de metro konden we niet direct meten.
 - Op 10 en 11 september 2022 ontbrak TfL-data; die dagen zijn uit de analyse gehaald.
+- Zowel metro stations als fiets stations zijn geconcentreerd op drukke centrale punten. Afstand tot het centrum,
+  drukke woonwijken of plaatsen met veel banen is misschien bepalender voor fietsverhuur dan nabijheid van de metro.
 
    """)
