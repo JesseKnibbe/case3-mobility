@@ -13,6 +13,7 @@ EARTH_RADIUS_M = 6_371_000
 LABELS = ["Close (≤200 m)", "Medium (200-500 m)", "Far (>500 m)"]
 COLORS = {"Metro station": "#1f1f1f", "Close (≤200 m)": "#2ca02c",
           "Medium (200-500 m)": "#ff7f0e", "Far (>500 m)": "#d62728"}
+DAY_TYPES = ["Weekdag", "Weekend"]
 
 
 @st.cache_data
@@ -43,7 +44,7 @@ bikes, metro = load()
 
 @st.cache_data
 def load_monthly(bikes: pd.DataFrame) -> pd.DataFrame:
-    sd = pd.read_parquet(wi.PROC / "station_day.parquet")
+    sd = pd.read_parquet("station_day.parquet")
     sd["date"] = pd.to_datetime(sd["date"])
     sd = sd[sd["date"].dt.year == 2022]
 
@@ -51,17 +52,26 @@ def load_monthly(bikes: pd.DataFrame) -> pd.DataFrame:
     sd = sd.merge(bikes[["bikepoint_id", "metro_distance"]],
                   on="bikepoint_id", how="inner")
 
-    # total departures per month and category
+    # weekday / weekend label and month
+    sd["day_type"] = sd["date"].dt.dayofweek.ge(5).map({True: "Weekend", False: "Weekdag"})
     sd["month"] = sd["date"].dt.to_period("M").dt.to_timestamp()
-    monthly = (sd.groupby(["month", "metro_distance"], observed=True)["departures"]
+
+    # total departures per month, category and day type
+    monthly = (sd.groupby(["month", "metro_distance", "day_type"], observed=True)["departures"]
                  .sum().reset_index())
 
-    # normalise: per station, per day
-    n_stations = bikes.groupby("metro_distance").size().rename("n_stations")
-    monthly = monthly.merge(n_stations, on="metro_distance")
-    monthly["days"] = monthly["month"].dt.days_in_month
+    # number of weekdays / weekend days in each month of 2022
+    cal = pd.DataFrame({"date": pd.date_range("2022-01-01", "2022-12-31")})
+    cal["day_type"] = cal["date"].dt.dayofweek.ge(5).map({True: "Weekend", False: "Weekdag"})
+    cal["month"] = cal["date"].dt.to_period("M").dt.to_timestamp()
+    n_days = cal.groupby(["month", "day_type"]).size().rename("n_days").reset_index()
+
+    # number of stations per category
+    n_stations = bikes.groupby("metro_distance").size().rename("n_stations").reset_index()
+
+    monthly = monthly.merge(n_days, on=["month", "day_type"]).merge(n_stations, on="metro_distance")
     monthly["departures_per_station_day"] = (
-        monthly["departures"] / (monthly["days"] * monthly["n_stations"])
+        monthly["departures"] / (monthly["n_days"] * monthly["n_stations"])
     )
     return monthly
 
@@ -114,8 +124,9 @@ with tab_map2:
 with tab_line2:
           st.markdown("**Verhuringen per maand (2022), naar afstand tot de metro**")
           fig = px.line(monthly, x="month", y="departures_per_station_day",
-              color="metro_distance", markers=True,
+              color="metro_distance", line_dash="day_type", markers=True,
               color_discrete_map=COLORS,
+              line_dash_map={"Weekdag": "solid", "Weekend": "dash"},
               category_orders={"metro_distance": LABELS},
               height=450,
               labels={"month": "Maand",
