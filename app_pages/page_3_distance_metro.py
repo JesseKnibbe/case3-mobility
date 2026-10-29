@@ -42,6 +42,35 @@ def load():
 
 bikes, metro = load()
 
+# -jurre- updating code for making a lineplot x=month, y=verhuringen, color=afstandscategorie van metro naar bike rental (close,medium,far)
+
+@st.cache_data
+def load_monthly(bikes: pd.DataFrame) -> pd.DataFrame:
+    sd = pd.read_parquet("station_day.parquet")
+    sd["date"] = pd.to_datetime(sd["date"])
+    sd = sd[sd["date"].dt.year == 2022]
+
+    # attach distance category per station
+    sd = sd.merge(bikes[["bikepoint_id", "metro_distance"]],
+                  on="bikepoint_id", how="inner")
+
+    # total departures per month and category
+    sd["month"] = sd["date"].dt.to_period("M").dt.to_timestamp()
+    monthly = (sd.groupby(["month", "metro_distance"], observed=True)["departures"]
+                 .sum().reset_index())
+
+    # normalise: per station, per day
+    n_stations = bikes.groupby("metro_distance").size().rename("n_stations")
+    monthly = monthly.merge(n_stations, on="metro_distance")
+    monthly["days"] = monthly["month"].dt.days_in_month
+    monthly["departures_per_station_day"] = (
+        monthly["departures"] / (monthly["days"] * monthly["n_stations"])
+    )
+    return monthly
+
+monthly = load_monthly(bikes)
+
+
 st.title("🚇 Distance from Metro")
 st.subheader("Wordt de Bikeshare minder gebruikt dicht bij de metro?")
 
@@ -78,6 +107,18 @@ fig.update_layout(height=560, margin=dict(l=0, r=0, t=0, b=0), plot_bgcolor="whi
                   legend=dict(orientation="h", y=1.02))
 st.plotly_chart(fig)
 
+# ---------------------------------------------------------------- distance vs rentals - updated for time(month)
+st.markdown("**Verhuringen per maand (2022), naar afstand tot de metro**")
+fig = px.line(monthly, x="month", y="departures_per_station_day",
+              color="metro_distance", markers=True,
+              color_discrete_map=COLORS,
+              category_orders={"metro_distance": LABELS},
+              height=450,
+              labels={"month": "Maand",
+                      "departures_per_station_day": "Gem. verhuringen per station per dag",
+                      "metro_distance": ""})
+fig.update_xaxes(dtick="M1", tickformat="%b")
+st.plotly_chart(fig)
 # ---------------------------------------------------------------- distance vs rentals
 st.markdown("**Afstand tot de metro vs. verhuringen per station**")
 fig = px.scatter(bikes, x="dist_to_metro_m", y="departures_per_day", color="metro_distance",
