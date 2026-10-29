@@ -81,6 +81,9 @@ monthly = load_monthly(bikes)
 st.title("🚇 Distance from Metro")
 st.subheader("Wordt de Bikeshare minder gebruikt dicht bij de metro?")
 
+st.write(bikes["metro_distance"].value_counts(dropna=False))
+st.write(monthly["metro_distance"].value_counts(dropna=False))
+
 # ---------------------------------------------------------------- key figures
 counts = bikes["metro_distance"].value_counts()
 k1, k2, k3, k4 = st.columns(4)
