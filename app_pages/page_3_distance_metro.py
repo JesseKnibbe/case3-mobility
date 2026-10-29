@@ -119,16 +119,7 @@ fig = px.line(monthly, x="month", y="departures_per_station_day",
                       "metro_distance": ""})
 fig.update_xaxes(dtick="M1", tickformat="%b")
 st.plotly_chart(fig)
-# ---------------------------------------------------------------- distance vs rentals
-st.markdown("**Afstand tot de metro vs. verhuringen per station**")
-fig = px.scatter(bikes, x="dist_to_metro_m", y="departures_per_day", color="metro_distance",
-                 color_discrete_map=COLORS, category_orders={"metro_distance": LABELS},
-                 trendline="lowess", trendline_scope="overall", trendline_color_override="black",
-                 log_y=True, hover_name="name", height=450,
-                 labels={"dist_to_metro_m": "Afstand tot dichtstbijzijnde metro (m)",
-                         "departures_per_day": "Verhuringen per dag (log-schaal)", "metro_distance": ""})
-fig.update_yaxes(tickvals=[1, 2, 5, 10, 20, 50, 100, 200, 500])
-st.plotly_chart(fig)
+
 
 # ---------------------------------------------------------------- average per group
 summary = (bikes.groupby("metro_distance")["departures_per_day"]
