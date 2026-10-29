@@ -123,21 +123,39 @@ with tab_map2:
 
 with tab_line2:
           st.markdown("**Verhuringen per maand (2022), naar afstand tot de metro**")
-          fig = px.line(monthly, x="month", y="departures_per_station_day",
+          
+          keuze = st.selectbox(
+              "Toon",
+              ["Weekdagen en weekend", "Alleen weekdagen", "Alleen weekend"],
+          )
+
+          if keuze == "Alleen weekdagen":
+              day_types = ["Weekdag"]
+          elif keuze == "Alleen weekend":
+              day_types = ["Weekend"]
+          else:
+              day_types = DAY_TYPES
+
+          monthly_view = monthly[monthly["day_type"].isin(day_types)]
+          
+          
+          
+          fig = px.line(monthly_view, x="month", y="departures_per_station_day",
               color="metro_distance", line_dash="day_type", markers=True,
               color_discrete_map=COLORS,
               line_dash_map={"Weekdag": "solid", "Weekend": "dash"},
-              category_orders={"metro_distance": LABELS},
+              category_orders={"metro_distance": LABELS, "day_type": DAY_TYPES},
               height=450,
               labels={"month": "Maand",
                       "departures_per_station_day": "Gem. verhuringen per station per dag",
-                      "metro_distance": ""})
+                      "metro_distance": "", "day_type": ""})
           fig.update_xaxes(dtick="M1", tickformat="%b")
 
-          # make the weekend lines (dashed) more transparent
-          for trace in fig.data:
-              if trace.line.dash == "dash":
-                  trace.opacity = 0.4
+        # fade the weekend lines, but only when both are shown together
+          if keuze == "Weekdagen en weekend":
+              for trace in fig.data:
+                  if trace.line.dash == "dash":
+                      trace.opacity = 0.4
           
           st.plotly_chart(fig)
 
