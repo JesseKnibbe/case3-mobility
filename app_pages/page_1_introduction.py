@@ -20,10 +20,8 @@ cfg, daily, stations = load()
 st.title("🚲 Bikeshare in Londen: zorgt regen voor minder ritten?")
 st.markdown(
     """
-**Hoofdvraag:** Zorgt regen ervoor dat de Bikeshare minder gebruikt wordt?
-
 **Subvragen**
-- **Afstand tot de metro** *(Jurre)*: wordt de Bikeshare minder gebruikt bij stations dicht bij een metrostation?
+- **Afstand tot de metro** Wordt de Bikeshare minder gebruikt bij verhuurstations dicht bij een metrostation?
 - **Weer** Waar en bij wie heeft regen de meeste impact, en verliezen stations dicht bij de metro
   meer ritten als het regent?
 """
