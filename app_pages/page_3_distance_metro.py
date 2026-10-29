@@ -79,57 +79,7 @@ k2.metric("Metrostations", len(metro))
 k3.metric("Mediane afstand tot metro", f"{bikes['dist_to_metro_m'].median():.0f} m")
 k4.metric("Binnen 200 m van de metro", f"{counts.get(LABELS[0], 0) / len(bikes):.0%}")
 
-# ---------------------------------------------------------------- map (no internet needed)
-st.markdown("**Fietsstations per afstand tot het dichtstbijzijnde metrostation**")
-fig = go.Figure()
-geo = wi.load_boroughs()   # borough outlines as background
-for f in geo["features"]:
-    polys = f["geometry"]["coordinates"]
-    for poly in ([polys] if f["geometry"]["type"] == "Polygon" else polys):
-        fig.add_trace(go.Scatter(x=[c[0] for c in poly[0]], y=[c[1] for c in poly[0]], mode="lines",
-                                 line=dict(color="#d5d8dd", width=1), hoverinfo="skip", showlegend=False))
-fig.add_trace(go.Scatter(x=metro["lon"], y=metro["lat"], mode="markers", name="Metro station",
-                         marker=dict(color=COLORS["Metro station"], size=6, symbol="square"),
-                         text=metro["name"], hoverinfo="text"))
-for label in LABELS:
-    b = bikes[bikes["metro_distance"] == label]
-    fig.add_trace(go.Scatter(x=b["lon"], y=b["lat"], mode="markers", name=f"{label} (n={len(b)})",
-                             marker=dict(color=COLORS[label], size=7, line=dict(width=0.5, color="white")),
-                             text=[f"<b>{n}</b><br>{d:.0f} m tot {m}" for n, d, m in
-                                   zip(b["name"], b["dist_to_metro_m"], b["nearest_metro"])], hoverinfo="text"))
-fig.update_xaxes(visible=False, range=[bikes["lon"].min() - 0.01, bikes["lon"].max() + 0.01])
-fig.update_yaxes(visible=False, range=[bikes["lat"].min() - 0.005, bikes["lat"].max() + 0.005],
-                 scaleanchor="x", scaleratio=1.6)
-fig.update_layout(height=560, margin=dict(l=0, r=0, t=0, b=0), plot_bgcolor="white",
-                  legend=dict(orientation="h", y=1.02))
-st.plotly_chart(fig)
 
-# ---------------------------------------------------------------- distance vs rentals - updated for time(month)
-st.markdown("**Verhuringen per maand (2022), naar afstand tot de metro**")
-fig = px.line(monthly, x="month", y="departures_per_station_day",
-              color="metro_distance", markers=True,
-              color_discrete_map=COLORS,
-              category_orders={"metro_distance": LABELS},
-              height=450,
-              labels={"month": "Maand",
-                      "departures_per_station_day": "Gem. verhuringen per station per dag",
-                      "metro_distance": ""})
-fig.update_xaxes(dtick="M1", tickformat="%b")
-st.plotly_chart(fig)
-
-
-# ---------------------------------------------------------------- average per group
-summary = (bikes.groupby("metro_distance")["departures_per_day"]
-           .agg(stations="size", mean="mean", median="median").reindex(LABELS).round(1).reset_index())
-c1, c2 = st.columns([3, 2])
-fig = px.bar(summary, x="metro_distance", y="median", color="metro_distance", color_discrete_map=COLORS,
-             text=summary["median"].map(lambda v: f"{v:.0f}"), height=350,
-             labels={"metro_distance": "", "median": "Mediaan verhuringen per dag"})
-fig.update_traces(textposition="outside", cliponaxis=False)
-fig.update_layout(showlegend=False)
-c1.plotly_chart(fig)
-c2.dataframe(summary.rename(columns={"metro_distance": "Groep", "stations": "Stations",
-                                     "mean": "Gemiddeld per dag", "median": "Mediaan per dag"}), hide_index=True)
 
 
 # ------------------------------------------------------------------- edit into tabs from this point onward:
