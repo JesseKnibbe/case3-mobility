@@ -137,7 +137,7 @@ with tab_line2:
           # make the weekend lines (dashed) more transparent
           for trace in fig.data:
               if trace.line.dash == "dash":
-                  trace.opacity = 0.5
+                  trace.opacity = 0.4
           
           st.plotly_chart(fig)
 
