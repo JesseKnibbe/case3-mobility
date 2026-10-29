@@ -77,6 +77,27 @@ def load_monthly(bikes: pd.DataFrame) -> pd.DataFrame:
 
 monthly = load_monthly(bikes)
 
+@st.cache_data
+def load_station_perday(bikes: pd.DataFrame) -> pd.DataFrame:
+    sd = pd.read_parquet("station_day.parquet")
+    sd["date"] = pd.to_datetime(sd["date"])
+    sd = sd[sd["date"].dt.year == 2022]
+    sd["day_type"] = sd["date"].dt.dayofweek.ge(5).map({True: "Weekend", False: "Weekdag"})
+
+    # number of weekdays / weekend days in 2022
+    cal = pd.Series(pd.date_range("2022-01-01", "2022-12-31"))
+    n_days = cal.dt.dayofweek.ge(5).map({True: "Weekend", False: "Weekdag"}).value_counts()
+
+    # every station x every day type, so stations without departures count as 0
+    base = bikes[["bikepoint_id", "metro_distance"]].drop_duplicates("bikepoint_id")
+    grid = base.merge(pd.DataFrame({"day_type": DAY_TYPES}), how="cross")
+    tot = sd.groupby(["bikepoint_id", "day_type"], as_index=False)["departures"].sum()
+    grid = grid.merge(tot, on=["bikepoint_id", "day_type"], how="left")
+    grid["departures"] = grid["departures"].fillna(0)
+    grid["departures_per_day"] = grid["departures"] / grid["day_type"].map(n_days)
+    return grid
+
+per_station = load_station_perday(bikes)
 
 st.title("🚇 Distance from Metro")
 st.subheader("Wordt de Bikeshare minder gebruikt dicht bij de metro?")
@@ -186,16 +207,45 @@ with tab_line2:
 
 
 with tab_summary:
-          summary = (bikes.groupby("metro_distance")["departures_per_day"]
-           .agg(stations="size", mean="mean", median="median").reindex(LABELS).round(1).reset_index())
+          per_station_view = per_station[per_station["day_type"].isin(day_types)]
+
+          summary = (per_station_view
+                     .groupby(["metro_distance", "day_type"], observed=True)["departures_per_day"]
+                     .agg(stations="size", mean="mean", median="median")
+                     .round(1).reset_index())
+          summary["metro_distance"] = pd.Categorical(summary["metro_distance"], LABELS, ordered=True)
+          summary["day_type"] = pd.Categorical(summary["day_type"], DAY_TYPES, ordered=True)
+          summary = summary.sort_values(["metro_distance", "day_type"])
+
           c1, c2 = st.columns([3, 2])
-          fig = px.bar(summary, x="metro_distance", y="median", color="metro_distance", color_discrete_map=COLORS,
-             text=summary["median"].map(lambda v: f"{v:.0f}"), height=350,
-             labels={"metro_distance": "", "median": "Mediaan verhuringen per dag"})
-          fig.update_traces(textposition="outside", cliponaxis=False)
-          fig.update_layout(showlegend=False)
+
+          fig = go.Figure()
+          for dt in day_types:
+              d = summary[summary["day_type"] == dt]
+              fig.add_trace(go.Bar(
+                  x=d["metro_distance"].astype(str), y=d["median"], name=dt,
+                  marker_color=[COLORS[c] for c in d["metro_distance"]],
+                  opacity=0.5 if (both and dt == "Weekend") else 1,
+                  text=d["median"].map(lambda v: f"{v:.0f}"),
+                  textposition="outside", cliponaxis=False, showlegend=False,
+              ))
+
+          # legend that explains weekday vs weekend, only when both are shown
+          if both:
+              fig.add_trace(go.Bar(x=[None], y=[None], name="Weekdag",
+                         marker_color="grey", opacity=1))
+              fig.add_trace(go.Bar(x=[None], y=[None], name="Weekend",
+                         marker_color="grey", opacity=0.5))
+
+          fig.update_layout(barmode="group", height=350, showlegend=both,
+                  legend=dict(title_text=""),
+                  xaxis=dict(categoryorder="array", categoryarray=LABELS, title=""),
+                  yaxis_title="Mediaan verhuringen per dag")
+          fig.update_yaxes(rangemode="tozero")
           c1.plotly_chart(fig)
-          c2.dataframe(summary.rename(columns={"metro_distance": "Groep", "stations": "Stations",
-                                     "mean": "Gemiddeld per dag", "median": "Mediaan per dag"}), hide_index=True)
+
+          c2.dataframe(summary.rename(columns={"metro_distance": "Groep", "day_type": "Dagtype",
+                                     "stations": "Stations", "mean": "Gemiddeld per dag",
+                                     "median": "Mediaan per dag"}), hide_index=True)
 
           
