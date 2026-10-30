@@ -86,7 +86,7 @@ def borough_map(geo, b, col, scale, title):
     return fig
 
 # ---------------------------------------------------------------- aanpassing Jurre, voorspelling filtert temperatuur en weekdag/vrijedag uit
-def fit_rain_model(d):
+def fit_rain_model_v2(d):
     d = d.assign(werkdag=(d["day_type"] == "werkdag").astype(int))
     return smf.ols("rides ~ precip_mm + temp_mean + werkdag", data=d).fit()
 # ---------------------------------------------------------------- einde aanpassing jurre
@@ -178,7 +178,7 @@ with tab_map:
 # ---------------------------------------------------------------- tab 3: prediction (precipitation only)
 with tab_model:
     st.subheader("Voorspel het aantal ritten op basis van neerslag, temperatuur en dagtype")
-    model = wi.fit_rain_model(d)
+    model = fit_rain_model_v2(d)
     p = model.params
 
     c_in1, c_in2, c_in3 = st.columns(3)
