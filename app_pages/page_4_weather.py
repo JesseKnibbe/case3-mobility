@@ -116,7 +116,7 @@ k1.metric("Effect regen (heel Londen)", f"{city_pct:+.0f}%" if pd.notna(city_pct
 k2.metric("Regendagen / droge dagen", f"{n_rain} / {int((d['precip_mm'] < wi.DRY_MM).sum())}")
 k3.metric("Stations geanalyseerd", f"{len(effect)}")
 
-tab_main, tab_map, tab_model = st.tabs(["❓ Hoofdvraag", "🗺️ Kaart", "🔮 Voorspelling"])
+tab_main, tab_map, tab_model, tab_testing = st.tabs(["❓ Hoofdvraag", "🗺️ Kaart", "🔮 Voorspelling", "🔮 Testing"])
 
 # ---------------------------------------------------------------- tab 1: main question
 with tab_main:
@@ -174,8 +174,8 @@ with tab_map:
                                   "rides_per_day": "Ritten per dag", "effect_pct": "Effect regen (%)"}))
         st.dataframe(tbl.round({"Ritten per dag": 0, "Effect regen (%)": 1}), hide_index=True)
 
-    st.dataframe(d)
-# ---------------------------------------------------------------- tab 3: prediction (precipitation only)
+
+# ---------------------------------------------------------------- tab 3: prediction model (precipitation / temperature / workday vs weekday)
 with tab_model:
     st.subheader("Voorspel het aantal ritten op basis van neerslag, temperatuur en dagtype")
     model = fit_rain_model_v2(d)
@@ -217,7 +217,44 @@ with tab_model:
     fig.update_layout(legend=dict(orientation="h", y=1.05))
     st.plotly_chart(fig)
 
+# ---------------------------------------------------------------- tab 4: model testing vs 2021 data
+with tab_testing:
+    st.subheader("Validatie op 2021 (controlegroep)")
 
+    test = (pd.read_parquet("rides_2021_sample.parquet")
+          .merge(pd.read_parquet("weather_2021.parquet"), on="date", how="inner")
+          .dropna(subset=["rides", "temp_mean", "precip_mm"]))
+    test["werkdag"] = (test["day_type"] == "werkdag").astype(int)
+    test["voorspeld"] = model.predict(test[["precip_mm", "temp_mean", "werkdag"]])
+    test["fout"] = test["rides"] - test["voorspeld"]
 
+    sse = (test["fout"] ** 2).sum()
+    sst = ((test["rides"] - test["rides"].mean()) ** 2).sum()
+    r2_out = 1 - sse / sst
+    mae = test["fout"].abs().mean()
+    rmse = np.sqrt((test["fout"] ** 2).mean())
+    bias = test["fout"].mean()
+    corr = test["rides"].corr(test["voorspeld"])
+
+    k1, k2, k3, k4, k5 = st.columns(5)
+    k1.metric("Dagen in test", len(test))
+    k2.metric("R² (2021)", f"{r2_out:.2f}", help="Out-of-sample: 1 - SSE/SST t.o.v. het 2021-gemiddelde. Kan negatief zijn.")
+    k3.metric("Correlatie", f"{corr:.2f}", help="Volgt het model het patroon, los van het niveau?")
+    k4.metric("MAE", f"{mae:,.0f}".replace(",", "."))
+    k5.metric("Gem. fout (bias)", f"{bias:+,.0f}".replace(",", "."),
+          help="Negatief = model voorspelt te hoog voor 2021")
+
+    lim = [0, max(test["rides"].max(), test["voorspeld"].max()) * 1.05]
+    fig1 = px.scatter(test, x="voorspeld", y="rides", color="day_type", opacity=.7, height=450,
+                  hover_data=["date", "temp_mean", "precip_mm"],
+                  labels={"voorspeld": "Voorspeld (model 2022)", "rides": "Werkelijk 2021"})
+    fig1.add_shape(type="line", x0=lim[0], y0=lim[0], x1=lim[1], y1=lim[1],
+               line=dict(dash="dash", color="grey"))
+    st.plotly_chart(fig1)
+
+    test["maand"] = test["date"].dt.to_period("M").astype(str)
+    fig2 = px.box(test, x="maand", y="fout", height=350,
+              labels={"fout": "Werkelijk - voorspeld", "maand": "Maand"})
+    st.plotly_chart(fig2)
 
 
