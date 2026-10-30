@@ -83,6 +83,8 @@ def borough_map(geo, b, col, scale, title):
     fig.update_layout(height=560, margin=dict(l=0, r=0, t=0, b=0), plot_bgcolor="white")
     return fig
 
+# ---------------------------------------------------------------- aanpassing Jurre, voorspelling filtert temperatuur uit
+
 
 daily, stations, sd = load_data()
 
@@ -193,3 +195,4 @@ with tab_model:
 
 
 print(d.head())
+print(daily.head())
