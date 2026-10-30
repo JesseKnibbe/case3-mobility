@@ -174,6 +174,7 @@ with tab_map:
                                   "rides_per_day": "Ritten per dag", "effect_pct": "Effect regen (%)"}))
         st.dataframe(tbl.round({"Ritten per dag": 0, "Effect regen (%)": 1}), hide_index=True)
 
+    st.dataframe(d)
 # ---------------------------------------------------------------- tab 3: prediction (precipitation only)
 with tab_model:
     st.subheader("Voorspel het aantal ritten op basis van neerslag, temperatuur en dagtype")
@@ -218,5 +219,5 @@ with tab_model:
 
 
 
-st.dataframe(d)
+
 
