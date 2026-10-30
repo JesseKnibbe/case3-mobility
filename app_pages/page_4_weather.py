@@ -194,5 +194,5 @@ with tab_model:
                "seizoen en temperatuur verklaren een groot deel van de rest.".replace(",", "."))
 
 
-print(d.head())
-print(daily.head())
+st.d.head()
+
