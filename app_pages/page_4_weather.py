@@ -190,3 +190,6 @@ with tab_model:
     st.plotly_chart(fig)
     st.caption(f"Model: ritten = {a:,.0f} {b:+,.0f} × neerslag (mm). Alleen neerslag zit in het model; "
                "seizoen en temperatuur verklaren een groot deel van de rest.".replace(",", "."))
+
+
+print(d.head())
