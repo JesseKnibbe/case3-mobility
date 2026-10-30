@@ -6,6 +6,8 @@ import plotly.graph_objects as go
 import streamlit as st
 
 import weather_impact as wi
+import statsmodels.formula.api as smf
+
 
 RAIN = "#2a6fdb"
 INK = "#3d4450"
@@ -83,7 +85,11 @@ def borough_map(geo, b, col, scale, title):
     fig.update_layout(height=560, margin=dict(l=0, r=0, t=0, b=0), plot_bgcolor="white")
     return fig
 
-# ---------------------------------------------------------------- aanpassing Jurre, voorspelling filtert temperatuur uit
+# ---------------------------------------------------------------- aanpassing Jurre, voorspelling filtert temperatuur en weekdag/vrijedag uit
+def fit_rain_model(d):
+    d = d.assign(werkdag=(d["day_type"] == "werkdag").astype(int))
+    return smf.ols("rides ~ precip_mm + temp_mean + werkdag", data=d).fit()
+# ---------------------------------------------------------------- einde aanpassing jurre
 
 
 daily, stations, sd = load_data()
@@ -170,28 +176,46 @@ with tab_map:
 
 # ---------------------------------------------------------------- tab 3: prediction (precipitation only)
 with tab_model:
-    st.subheader("Voorspel het aantal ritten op basis van neerslag")
+    st.subheader("Voorspel het aantal ritten op basis van neerslag, temperatuur en dagtype")
     model = wi.fit_rain_model(d)
-    a, b = model.params["Intercept"], model.params["precip_mm"]
+    p = model.params
 
-    mm = st.slider("Neerslag (mm)", 0.0, 25.0, 5.0, 0.5)
-    pred = a + b * mm
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Verwachte ritten", f"{pred:,.0f}".replace(",", "."), f"{pred - a:+,.0f} t.o.v. droge dag".replace(",", "."))
-    c2.metric("Per mm regen", f"{b:+,.0f} ritten".replace(",", "."))
-    c3.metric("R²", f"{model.rsquared:.2f}", help="Welk deel van de verschillen tussen dagen neerslag verklaart")
+    c_in1, c_in2, c_in3 = st.columns(3)
+    mm = c_in1.slider("Neerslag (mm)", 0.0, 25.0, 5.0, 0.5)
+    temp = c_in2.slider("Gemiddelde temperatuur (°C)",
+                    float(d["temp_mean"].min()), float(d["temp_mean"].max()),
+                    float(d["temp_mean"].mean()), 0.5)
+    dagtype = c_in3.radio("Dagtype", ["werkdag", "weekend/feestdag"], horizontal=True)
+    wd = int(dagtype == "werkdag")
 
-    fig = px.scatter(d, x="precip_mm", y="rides", opacity=.5, height=400,
-                     labels={"precip_mm": "Neerslag (mm)", "rides": "Ritten per dag"})
-    fig.update_traces(marker=dict(color="#9aa4b1", size=7))
+    def predict(precip):
+        X = pd.DataFrame({"precip_mm": np.atleast_1d(precip), "temp_mean": temp, "werkdag": wd})
+        return model.predict(X).to_numpy()
+
+    pred = predict(mm)[0]
+    pred_dry = predict(0.0)[0]
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Verwachte ritten", f"{pred:,.0f}".replace(",", "."),
+          f"{pred - pred_dry:+,.0f} t.o.v. droge dag".replace(",", "."))
+    c2.metric("Per mm regen", f"{p['precip_mm']:+,.0f} ritten".replace(",", "."))
+    c3.metric("Per °C", f"{p['temp_mean']:+,.0f} ritten".replace(",", "."))
+    c4.metric("Werkdag vs weekend", f"{p['werkdag']:+,.0f} ritten".replace(",", "."))
+    st.caption(f"R² = {model.rsquared:.2f}")
+
+    d_plot = d.assign(dagtype=d["day_type"])
+    fig = px.scatter(d_plot, x="precip_mm", y="rides", color="dagtype", opacity=.5, height=400,
+                 color_discrete_map={"werkdag": "#9aa4b1", "weekend/feestdag": "#e0b44c"},
+                 labels={"precip_mm": "Neerslag (mm)", "rides": "Ritten per dag", "dagtype": "Dagtype"})
     xs = np.array([0, max(25, d["precip_mm"].max())])
-    fig.add_trace(go.Scatter(x=xs, y=a + b * xs, mode="lines", line=dict(color=RAIN, width=2), name="regressielijn"))
+    fig.add_trace(go.Scatter(x=xs, y=predict(xs), mode="lines",
+                         line=dict(color=RAIN, width=2),
+                         name=f"regressielijn ({dagtype}, {temp:.1f}°C)"))
     fig.add_trace(go.Scatter(x=[mm], y=[pred], mode="markers", name="jouw keuze",
-                             marker=dict(size=13, color=RAIN, line=dict(width=2, color="white"))))
+                         marker=dict(size=13, color=RAIN, line=dict(width=2, color="white"))))
     fig.update_layout(legend=dict(orientation="h", y=1.05))
     st.plotly_chart(fig)
-    st.caption(f"Model: ritten = {a:,.0f} {b:+,.0f} × neerslag (mm). Alleen neerslag zit in het model; "
-               "seizoen en temperatuur verklaren een groot deel van de rest.".replace(",", "."))
+
 
 
 st.dataframe(d)
