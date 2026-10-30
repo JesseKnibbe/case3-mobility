@@ -221,8 +221,8 @@ with tab_model:
 with tab_testing:
     st.subheader("Validatie op 2021 (controlegroep)")
 
-    test = (pd.read_parquet("rides_2021_sample.parquet")
-          .merge(pd.read_parquet("weather_2021.parquet"), on="date", how="inner")
+    test = (pd.read_parquet(wi.PROC / "rides_2021_sample.parquet")
+          .merge(pd.read_parquet(wi.PROC / "weather_2021.parquet"), on="date", how="inner")
           .dropna(subset=["rides", "temp_mean", "precip_mm"]))
     test["werkdag"] = (test["day_type"] == "werkdag").astype(int)
     test["voorspeld"] = model.predict(test[["precip_mm", "temp_mean", "werkdag"]])
