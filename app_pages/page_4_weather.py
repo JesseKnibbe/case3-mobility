@@ -253,8 +253,9 @@ with tab_testing:
     st.plotly_chart(fig1)
 
     test["maand"] = test["date"].dt.to_period("M").astype(str)
-    fig2 = px.box(test, x="maand", y="fout", height=350,
+    fig2 = px.box(test.sort_values("date"), x="maand", y="fout", height=350,
               labels={"fout": "Werkelijk - voorspeld", "maand": "Maand"})
+    fig2.update_xaxes(type="category", tickmode="linear", dtick=1, tickangle=-45)
     st.plotly_chart(fig2)
 
 
