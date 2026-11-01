@@ -116,7 +116,7 @@ k1.metric("Effect regen (heel Londen)", f"{city_pct:+.0f}%" if pd.notna(city_pct
 k2.metric("Regendagen / droge dagen", f"{n_rain} / {int((d['precip_mm'] < wi.DRY_MM).sum())}")
 k3.metric("Stations geanalyseerd", f"{len(effect)}")
 
-tab_main, tab_map, tab_model, tab_testing = st.tabs(["❓ Hoofdvraag", "🗺️ Kaart", "🔮 Voorspelling", "🔮 Testing"])
+tab_main, tab_map, tab_model, tab_testing = st.tabs(["❓ Hoofdvraag", "🗺️ Kaart", "🔮 Voorspelling", "✅ Validatie 2021"])
 
 # ---------------------------------------------------------------- tab 1: main question
 with tab_main:
