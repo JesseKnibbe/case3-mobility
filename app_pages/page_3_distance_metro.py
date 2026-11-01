@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import streamlit as st
 from sklearn.neighbors import BallTree
 
 import weather_impact as wi
@@ -115,7 +114,7 @@ k4.metric("Binnen 200 m van de metro", f"{counts.get(LABELS[0], 0) / len(bikes):
 
 # ------------------------------------------------------------------- edit into tabs from this point onward:
 
-tab_map2, tab_line2, tab_summary = st.tabs(["🗺️ Kaart", "❓ Hoofdvraag", "🔮 Averages"])
+tab_map2, tab_line2, tab_summary = st.tabs(["🗺️ Kaart", "📈 Per maand", "📊 Gemiddelden"])
 
 with tab_map2:
           st.markdown("**Fietsstations per afstand tot het dichtstbijzijnde metrostation**")
