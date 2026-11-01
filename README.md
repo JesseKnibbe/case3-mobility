@@ -23,5 +23,5 @@ streamlit run Start.py
 
 Volgorde notebooks: 01 → 02. Alle analyses staan in het dashboard.
 
-De weer- en metrodata staan in `data/raw/` op GitHub. De TfL-ritdata (±1,5 GB) en `rides_raw.parquet` (±180 MB)
-zijn te groot voor GitHub: notebook 01 downloadt en maakt ze automatisch opnieuw aan (eenmalig ±10–15 minuten).
+De weer- en metrodata staan in `data/raw/` op GitHub. De TfL-ritdata en `rides_raw.parquet` 
+zijn te groot voor GitHub: notebook 01 downloadt en maakt ze automatisch opnieuw aan 
