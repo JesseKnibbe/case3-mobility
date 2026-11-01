@@ -8,13 +8,20 @@ Subvragen: afstand tot de metro en weer.
 ```
 Start.py              hoofdbestand dashboard (navigatie)
 app_pages/            de 5 pagina's van het dashboard
-notebooks/            01 inladen · 02 opschonen ·
-weather_impact.py     gedeelde rekenpagina van het dashboard
+notebooks/            01 inladen · 02 opschonen
+weather_impact.py     gedeelde rekenfuncties van het dashboard
 data/processed/       kleine bestanden die het dashboard gebruikt
-data/raw/             ruwe data: weather/ en metro/ staan op GitHub, tfl/ niet (te groot)
+data/raw/             ruwe data: weather/, metro/ en geo/ staan op GitHub, tfl/ niet (te groot)
 ```
 
-Volgorde notebooks: 01 → 02 Alle analyses staat in het dashboard
+## Draaien
+
+```bash
+pip install -r requirements.txt
+streamlit run Start.py
+```
+
+Volgorde notebooks: 01 → 02. Alle analyses staan in het dashboard.
 
 De weer- en metrodata staan in `data/raw/` op GitHub. De TfL-ritdata (±1,5 GB) en `rides_raw.parquet` (±180 MB)
-zijn te groot voor GitHub: notebook 01 downloadt en maakt ze automatisch opnieuw aan.
+zijn te groot voor GitHub: notebook 01 downloadt en maakt ze automatisch opnieuw aan (eenmalig ±10–15 minuten).
